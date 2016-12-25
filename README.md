@@ -1,24 +1,13 @@
 # Docker container stack: hostap + dhcp server 
 
-Designed to work on **Raspberry Pi** (arm) using as base image alpine linux (very little size).
+This container starts wireless access point (hostap) and dhcp server in docker
+container. It supports both host networking and network interface reattaching
+to container network namespace modes (host and guest).
 
-# Idea
+## Requirements
 
-
-Since my last change on ISP, they put a cable modem with a horrible Wireless, it drops lots of packets, and I didn't want to put an extra AP or wireless router. 
-
-Most of the time use wireless devices on same room so I decided to try to convert my current Pi on a small Access Point using a small USB dongle.
-
-
-# Requirements
-
-On the host system, the ralink firmware (in my case) should be installed so you can use it on AP mode. On debian/raspbian:
-
-```
-apt-get install firmware-ralink
-```
-
-Make sure your USB support AP mode:
+On the host system install required wifi drivers, then make sure your wifi adapter
+supports AP mode:
 
 ```
 # iw list
@@ -34,7 +23,7 @@ Make sure your USB support AP mode:
 ...
 ```
 
-Set country regulations, for excample, to Spain set:
+Set country regulations, for example, for Spain set:
 
 ```
 # iw reg set ES
@@ -46,39 +35,48 @@ country ES: DFS-ETSI
         (57000 - 66000 @ 2160), (N/A, 40), (N/A)
 ```
 
-# Build / run
+## Build / run
 
-For modification, testings, etc.. there is already a `Makefile`. So you can `make run` to start a sample ssid with a simple password.
-
-I've already uploaded the image to docker hubs, so you can run it from ther like this:
+* Using host networking:
 
 ```
-sudo docker run -d -t \
-  -e INTERFACE=wlan0 \
-  -e CHANNEL=6 \
-  - e SSID=runssid \
-  -e APADDR=192.168.254.1 \
-  -e SUBNET=192.168.254.0 \
-  -e WPA_PASSPHRASE=passw0rd \
-  -e OUTGOINGS=eth0 \
-  --privileged \
-  --net host \
-  sdelrio/rpi-hostap:latest
+sudo docker run -d -t -e INTERFACE=wlan0 --net host --privileged offlinehacker/docker-ap
 ```
 
-But before this, hostap usually requires that wlan0 interface to be already up, so before `docker run` take the interface up:
+* Using network interface reattaching:
 
 ```
-/sbin/ifconfig wlan0 192.168.254.1/24 up
+sudo docker run -d -t -e INTERFACE=wlan0 -v /var/run/docker.sock:/var/run/docker.sock --privileged offlinehacker/docker-ap
 ```
 
-Also you should have a driver to enable hostap on your USB wifi
+This mode requires access to docker socket, so it can run a short lived
+container that reattaches network interface to network namespace of this
+container. It also renames wifi interface to **wlan0**, so you get
+deterministic networking environment. This mode can be usefull for example for
+pentesting, where can you use docker compose to run other wifi hacking tools
+and have deterministic environment with wifi interface.
 
-```
-apt-get install firmware-ralink
-```
+## Environment variables
 
-# Todo 
+* **INTERFACE**: name of the interface to use for wifi access point (default: wlan0)
+* **OUTGOING**: outgoing network interface (default: eth0)
+* **CHANNEL**: WIFI channel (default: 6)
+* **SUBNET**: Network subnet (default: 192.168.254.0)
+* **AP_ADDR**: Access point address (default: 192.168.254.1)
+* **SSID**: Access point SSID (default: docker-ap)
+* **WPA_PASSPHRASE**: WPA password (default: passw0rd)
+* **HW_MODE**: WIFI mode to use (default: g) 
+* **DRIVER**: WIFI driver to use (default: nl80211)
+* **HT_CAPAB**: WIFI HT capabilities for 802.11n (default: [HT40-][SHORT-GI-20][SHORT-GI-40]) 
+* **MODE**: Mode to run in guest/host (default: host)
 
-Improve README.md
+## License
 
+MIT
+
+## Author
+
+Jaka Hudoklin <jakahudoklin@gmail.com>
+
+Thanks to https://github.com/sdelrio/rpi-hostap for providing original
+implementation.
