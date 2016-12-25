@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # Check if running in privileged mode
 if [ ! -w "/sys" ] ; then
