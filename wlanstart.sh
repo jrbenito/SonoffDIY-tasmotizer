@@ -6,22 +6,35 @@ if [ ! -w "/sys" ] ; then
     exit 1
 fi
 
-# Check environment variables
-if [ ! "${INTERFACE}" ] ; then
-    echo "[Error] An interface must be specified."
-    exit 1
-fi
-
 # Default values
+true ${INTERFACE:=wlan0}
 true ${SUBNET:=192.168.254.0}
 true ${AP_ADDR:=192.168.254.1}
-true ${SSID:=raspberry}
+true ${SSID:=dockerap}
 true ${CHANNEL:=11}
 true ${WPA_PASSPHRASE:=passw0rd}
 true ${HW_MODE:=g}
 true ${DRIVER:=nl80211}
 true ${HT_CAPAB:=[HT40-][SHORT-GI-20][SHORT-GI-40]}
+true ${MODE:=host}
 
+# Attach interface to container in guest mode
+if [ "$MODE" == "guest"  ]; then
+    echo "Attaching interface to container"
+
+    CONTAINER_ID=$(cat /proc/self/cgroup | grep -o  -e "/docker/.*" | head -n 1| sed "s/\/docker\/\(.*\)/\\1/")
+    CONTAINER_PID=$(docker inspect -f '{{.State.Pid}}' ${CONTAINER_ID})
+    CONTAINER_IMAGE=$(docker inspect -f '{{.Config.Image}}' ${CONTAINER_ID})
+
+    docker run -t --privileged --net=host --pid=host --rm --entrypoint /bin/sh ${CONTAINER_IMAGE} -c "
+        PHY=\$(echo phy\$(iw dev ${INTERFACE} info | grep wiphy | tr ' ' '\n' | tail -n 1))
+        iw phy \$PHY set netns ${CONTAINER_PID}
+    "
+
+    ip link set ${INTERFACE} name wlan0
+
+    INTERFACE=wlan0
+fi
 
 if [ ! -f "/etc/hostapd.conf" ] ; then
     cat > "/etc/hostapd.conf" <<EOF
