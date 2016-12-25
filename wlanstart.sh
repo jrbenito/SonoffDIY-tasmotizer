@@ -58,6 +58,11 @@ EOF
 
 fi
 
+# unblock wlan
+rfkill unblock wlan
+
+echo "Setting interface ${INTERFACE}"
+
 # Setup interface and restart DHCP service 
 ip link set ${INTERFACE} up
 ip addr flush dev ${INTERFACE}
@@ -65,7 +70,6 @@ ip addr add ${AP_ADDR}/24 dev ${INTERFACE}
 
 # NAT settings
 echo "NAT settings ip_dynaddr, ip_forward"
-
 
 for i in ip_dynaddr ip_forward ; do 
   if [ $(cat /proc/sys/net/ipv4/$i) ]; then
