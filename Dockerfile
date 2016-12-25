@@ -1,4 +1,4 @@
-FROM hypriot/rpi-alpine-scratch
+FROM alpine
 
 MAINTAINER Sergio R. <sdelrio@users.noreply.github.com>
 
