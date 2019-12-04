@@ -41,6 +41,7 @@ country ES: DFS-ETSI
 
 ```
 sudo docker run -d -t -e INTERFACE=wlan0 --net host --privileged offlinehacker/docker-ap
+sudo docker run -i -t -e INTERFACE=wlan1 -e OUTGOINGS=wlan0 --net host --privileged won10/hostapd
 ```
 
 * Using network interface reattaching:
