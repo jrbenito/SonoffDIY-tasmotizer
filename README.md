@@ -1,10 +1,19 @@
-# Docker container stack: hostap + dhcp server 
+# Docker container stack: hostap + dhcp server + python scripts to flash Tasmota
 
 This container starts wireless access point (hostap) and dhcp server in docker
-container. It supports both host networking and network interface reattaching
-to container network namespace modes (host and guest).
+container. SSID will be `sonoffDiy` with default password of `20170618sn` necessary 
+for sonoffs in DIY mode to connect.
+
+After start, container will spin up a simple HTTP server in order to serve firmwares `.bin` files
+to the sonoff device. A python script will browser for device using Zeroconf mdns library and issue
+HTTP requests to put device on OTA Flash mode and point it to local HTTP server.
 
 ## Requirements
+
+Your machine **needs two network adapters**, the first is the one connected to internet; it can be ethernet or
+wireless. The second, is a wireless adapter capable of AP mode, this will be used by container to bring up
+wireless SSID needed by sonoffs. Variables `INTERFACE` shall be wireless interface (the second) and `OUTGOINGS`
+shall be internet interface.
 
 On the host system install required wifi drivers, then make sure your wifi adapter
 supports AP mode:
@@ -23,30 +32,18 @@ supports AP mode:
 ...
 ```
 
-Set country regulations, for example, for Spain set:
-
-```
-# iw reg set ES
-country ES: DFS-ETSI
-        (2400 - 2483 @ 40), (N/A, 20), (N/A)
-        (5150 - 5250 @ 80), (N/A, 23), (N/A), NO-OUTDOOR
-        (5250 - 5350 @ 80), (N/A, 20), (0 ms), NO-OUTDOOR, DFS
-        (5470 - 5725 @ 160), (N/A, 26), (0 ms), DFS
-        (57000 - 66000 @ 2160), (N/A, 40), (N/A)
-```
-
 ## Build / run
 
 * Using host networking:
 
 ```
-sudo docker run -i -t -e INTERFACE=wlan1 -e OUTGOINGS=wlan0 --net host --privileged won10/hostapd
+sudo docker run -i -t -e INTERFACE=wlan1 -e OUTGOINGS=wlan0 --net host --privileged jrbenito/sonoff-tasmotizer
 ```
 
 * Using network interface reattaching:
 
 ```
-sudo docker run -d -t -e INTERFACE=wlan0 -v /var/run/docker.sock:/var/run/docker.sock --privileged offlinehacker/docker-ap
+sudo docker run -d -t -e INTERFACE=wlan0 -v /var/run/docker.sock:/var/run/docker.sock --privileged jrbenito/sonoff-tasmotizer
 ```
 
 This mode requires access to docker socket, so it can run a short lived
@@ -60,15 +57,6 @@ and have deterministic environment with wifi interface.
 
 * **INTERFACE**: name of the interface to use for wifi access point (default: wlan0)
 * **OUTGOINGS**: outgoing network interface (default: eth0)
-* **CHANNEL**: WIFI channel (default: 6)
-* **SUBNET**: Network subnet (default: 192.168.254.0)
-* **AP_ADDR**: Access point address (default: 192.168.254.1)
-* **SSID**: Access point SSID (default: docker-ap)
-* **WPA_PASSPHRASE**: WPA password (default: passw0rd)
-* **HW_MODE**: WIFI mode to use (default: g) 
-* **DRIVER**: WIFI driver to use (default: nl80211)
-* **HT_CAPAB**: WIFI HT capabilities for 802.11n (default: [HT40-][SHORT-GI-20][SHORT-GI-40]) 
-* **MODE**: Mode to run in guest/host (default: host)
 
 ## License
 
@@ -76,7 +64,14 @@ MIT
 
 ## Author
 
-Jaka Hudoklin <jakahudoklin@gmail.com>
+Josenivaldo Benito Junior https://benito.com.br
 
-Thanks to https://github.com/sdelrio/rpi-hostap for providing original
-implementation.
+## Based on work of
+
+Inspired by Michel Deslierres https://www.sigmdel.ca/michel/ha/sonoff/sonoff_mini_en.html
+
+Contains code or ideas from:
+
+Docker-ap image from: https://github.com/won0-kim/docker-ap
+Tuya-Convert from: https://github.com/ct-Open-Source/tuya-convert
+Itead Sonoff python tool: https://github.com/itead/Sonoff_Devices_DIY_Tools

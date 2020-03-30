@@ -10,9 +10,9 @@ fi
 true ${INTERFACE:=wlan0}
 true ${SUBNET:=192.168.254.0}
 true ${AP_ADDR:=192.168.254.1}
-true ${SSID:=docker-ap}
+true ${SSID:=sonoffDiy}
 true ${CHANNEL:=11}
-true ${WPA_PASSPHRASE:=passw0rd}
+true ${WPA_PASSPHRASE:=20170618sn}
 true ${HW_MODE:=g}
 true ${DRIVER:=nl80211}
 true ${HT_CAPAB:=[HT40-][SHORT-GI-20][SHORT-GI-40]}
