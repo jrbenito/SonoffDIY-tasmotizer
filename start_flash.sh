@@ -30,11 +30,12 @@ setup () {
 cleanup () {
 	echo "======================================================"
 	echo "Cleaning up..."
-	sudo screen -S smarthack-web          -X stuff '^C'
+	screen -S smarthack-web          -X stuff '^C'
 	echo "Closing AP"
-	sudo pkill hostapd
-	echo "Firwall down"
-	sudo ./firewall.sh down
+	#pkill hostapd
+	screen -S smarthack-wifi          -X stuff '^C'
+	#echo "Firwall down"
+	#./firewall.sh down
 	echo "Exiting..."
 	popd >/dev/null || exit
 }
